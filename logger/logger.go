@@ -32,7 +32,7 @@ type Logger struct {
 }
 
 func Init(logDir string, logNamePrefix string, logRemainDays int, maxLogSize int64, logLevel int) {
-	GLogger := &Logger{
+	GLogger = &Logger{
 		LogDir:        logDir,
 		LogNamePrefix: logNamePrefix,
 		LogRemainDays: logRemainDays,
