@@ -27,6 +27,10 @@ func Base64Decode(src string) []byte {
 	return dst[:n]
 }
 
+func Base64Encode(src []byte) string {
+	return base64.StdEncoding.EncodeToString(src)
+}
+
 func SHA256SumInfo(info string) string {
 	h := sha256.New()
 	return base64.StdEncoding.EncodeToString(h.Sum([]byte(info)))
