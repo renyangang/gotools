@@ -51,41 +51,49 @@ func PKCS7Padding(plainText []byte, blockSize int) []byte {
 func EncodeAES(src, keyStr, ivStr string) (string, error) {
 	key := []byte(keyStr)
 	iv := []byte(ivStr)
-	block, err := aes.NewCipher(key)
+	ciphertext, err := BSEncodeAES([]byte(src), key, iv)
 	if err != nil {
-		logger.Error("EncodeAES NewCipher error:", err)
 		return "", err
 	}
-	plainbuf := []byte(src)
-	plainbuf = PKCS7Padding(plainbuf, block.BlockSize())
-	ciphertext := make([]byte, len(plainbuf))
-	cbc := cipher.NewCBCEncrypter(block, iv)
-	cbc.CryptBlocks(ciphertext, plainbuf)
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
+func BSEncodeAES(src, key, iv []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		logger.Error("EncodeAES NewCipher error:", err)
+		return nil, err
+	}
+	plainbuf := PKCS7Padding(src, block.BlockSize())
+	ciphertext := make([]byte, len(plainbuf))
+	cbc := cipher.NewCBCEncrypter(block, iv)
+	cbc.CryptBlocks(ciphertext, plainbuf)
+	return ciphertext, nil
+}
 func DecodeAES(src, keyStr, ivStr string) ([]byte, error) {
 	key := []byte(keyStr)
 	iv := []byte(ivStr)
+	return BSDecodeAES([]byte(src), key, iv)
+}
+func BSDecodeAES(src, key, iv []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		logger.Error("DecodeAES NewCipher error:", err)
 		return nil, err
 	}
-	ciphertext := Base64Decode(src)
-	if len(ciphertext) < aes.BlockSize {
+	if len(src) < aes.BlockSize {
 		logger.Error("ciphertext too short")
 		return nil, errors.New("ciphertext too short")
 	}
 	// CBC mode always works in whole blocks.
-	if len(ciphertext)%aes.BlockSize != 0 {
+	if len(src)%aes.BlockSize != 0 {
 		logger.Error("ciphertext is not a multiple of the block size")
 		return nil, errors.New("ciphertext is not a multiple of the block size")
 	}
 	mode := cipher.NewCBCDecrypter(block, iv)
-	plainText := make([]byte, len(ciphertext))
+	plainText := make([]byte, len(src))
 	// CryptBlocks can work in-place if the two arguments are the same.
-	mode.CryptBlocks(plainText, ciphertext)
+	mode.CryptBlocks(plainText, src)
 	return plainText, nil
 }
 
