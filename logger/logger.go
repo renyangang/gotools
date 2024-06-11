@@ -32,6 +32,10 @@ type Logger struct {
 }
 
 func Init(logDir string, logNamePrefix string, logRemainDays int, maxLogSize int64, logLevel int) {
+	InitIfStdOut(logDir, logNamePrefix, logRemainDays, maxLogSize, logLevel, true)
+}
+
+func InitIfStdOut(logDir string, logNamePrefix string, logRemainDays int, maxLogSize int64, logLevel int, isStdOut bool) {
 	GLogger = &Logger{
 		LogDir:        logDir,
 		LogNamePrefix: logNamePrefix,
@@ -40,7 +44,11 @@ func Init(logDir string, logNamePrefix string, logRemainDays int, maxLogSize int
 		isInit:        false,
 	}
 	LogLevel = logLevel
-	log.SetOutput(io.MultiWriter(GLogger, os.Stdout))
+	if isStdOut {
+		log.SetOutput(io.MultiWriter(GLogger, os.Stdout))
+	} else {
+		log.SetOutput(GLogger)
+	}
 	log.SetFlags(0)
 }
 
