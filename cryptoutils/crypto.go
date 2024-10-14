@@ -77,7 +77,12 @@ func BSEncodeAES(src, key, iv []byte) ([]byte, error) {
 func DecodeAES(src, keyStr, ivStr string) ([]byte, error) {
 	key := []byte(keyStr)
 	iv := []byte(ivStr)
-	return BSDecodeAES([]byte(src), key, iv)
+	srcBytes, err := base64.StdEncoding.DecodeString(src)
+	if err != nil {
+		logger.Error("DecodeAES DecodeString error:", err)
+		return nil, err
+	}
+	return BSDecodeAES(srcBytes, key, iv)
 }
 func BSDecodeAES(src, key, iv []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
