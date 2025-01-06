@@ -11,7 +11,6 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/renyangang/gotools/logger"
@@ -21,7 +20,7 @@ func Base64Decode(src string) []byte {
 	dst := make([]byte, base64.StdEncoding.DecodedLen(len(src)))
 	n, err := base64.StdEncoding.Decode(dst, []byte(src))
 	if err != nil {
-		fmt.Println("decode error:", err)
+		logger.Error("decode error:", err)
 		return nil
 	}
 	return dst[:n]
@@ -162,4 +161,29 @@ func GenRSAKeys() (string, string, error) {
 	}
 	pubKeyStr := base64.StdEncoding.EncodeToString(x509EncodedPublicKey)
 	return priKeyStr, pubKeyStr, nil
+}
+
+func DecodeRSA(data []byte, priKeyStr string) ([]byte, error) {
+	x509EncodedKey := Base64Decode(priKeyStr)
+	privateKey, err := x509.ParsePKCS1PrivateKey(x509EncodedKey)
+	if err != nil {
+		logger.Error("failed to parse private key:", err)
+		return nil, err
+	}
+	return rsa.DecryptPKCS1v15(rand.Reader, privateKey, data)
+}
+
+func EncodeRSA(data []byte, pubKeyStr string) ([]byte, error) {
+	x509EncodedKey := Base64Decode(pubKeyStr)
+	publicKey, err := x509.ParsePKIXPublicKey(x509EncodedKey)
+	if err != nil {
+		logger.Error("failed to parse public key:", err)
+		return nil, err
+	}
+	rsaPubKey, ok := publicKey.(*rsa.PublicKey)
+	if !ok {
+		logger.Error("public key is not an RSA key")
+		return nil, errors.New("public key is not an RSA key")
+	}
+	return rsa.EncryptPKCS1v15(rand.Reader, rsaPubKey, data)
 }
